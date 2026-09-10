@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>English Reader</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="sepia">
+
+<header id="topbar">
+  <div class="tb-left">
+    <button id="btnOpen" class="btn" title="Open a .txt / .md / .epub book">📖 Open Book</button>
+    <input type="file" id="fileInput" accept=".txt,.md,.epub,text/plain" hidden>
+    <span id="bookTitle" class="book-title"></span>
+  </div>
+  <div class="tb-right">
+    <button id="btnChapters" class="btn icon" title="Chapters">☰</button>
+    <button id="btnFontDown" class="btn icon" title="Smaller text">A−</button>
+    <button id="btnFontUp" class="btn icon" title="Larger text">A+</button>
+    <button id="btnTheme" class="btn icon" title="Toggle theme">☀</button>
+    <button id="btnTrToggle" class="btn icon active" title="Show / hide translations">⇅</button>
+    <button id="btnSettings" class="btn icon" title="Settings">⚙</button>
+    <button id="btnChatToggle" class="btn icon active" title="Show / hide the reading companion">🗨</button>
+  </div>
+</header>
+
+<div id="chapterPanel" class="hidden">
+  <div class="cp-title">Chapters</div>
+  <div id="chapterList"></div>
+</div>
+
+<div id="tipbar" class="hidden">
+  <span>Tip: select or right-click any sentence to <b>Translate</b> (shown below the sentence) or <b>Explain</b> (shown in the chat panel).</span>
+  <button id="tipClose" class="btn tiny" title="Dismiss">✕</button>
+</div>
+
+<div id="main">
+  <div id="readerWrap">
+    <div id="reader"></div>
+  </div>
+  <div id="divider" title="Drag to resize"></div>
+  <aside id="chatPanel">
+    <div id="chatHeader">
+      <div class="ch-title">Reading Companion<span id="chatModel" class="ch-model"></span></div>
+      <div class="ch-actions">
+        <button id="btnSearchToggle" class="btn tiny icon-btn" title="Let the assistant search the web">🔍</button>
+        <button id="btnChatClear" class="btn tiny" title="Clear conversation">Clear</button>
+        <button id="btnChatClose" class="btn tiny" title="Close panel">✕</button>
+      </div>
+    </div>
+    <div id="chatMessages"></div>
+    <div id="chatInputWrap">
+      <textarea id="chatInput" rows="2" placeholder="Ask about the book… (Enter to send, Shift+Enter for a new line)"></textarea>
+      <button id="btnSend" class="btn primary">Send</button>
+    </div>
+  </aside>
+</div>
+
+<div id="ctxMenu" class="hidden"></div>
+
+<div id="modalBack" class="hidden">
+  <div id="settingsModal" role="dialog" aria-modal="true" aria-label="Settings">
+    <h2>Settings</h2>
+    <div class="field">
+      <label for="setProvider">Provider preset</label>
+      <select id="setProvider"></select>
+    </div>
+    <div class="field">
+      <label for="setBaseUrl">Base URL <span class="hint">(OpenAI-compatible, usually ends with /v1)</span></label>
+      <input id="setBaseUrl" placeholder="https://api.openai.com/v1" spellcheck="false">
+    </div>
+    <div class="field">
+      <label for="setApiKey">API key</label>
+      <input id="setApiKey" type="password" placeholder="sk-…" spellcheck="false" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="setModel">Model</label>
+      <div class="row">
+        <input id="setModel" list="modelList" placeholder="gpt-4o-mini" spellcheck="false">
+        <datalist id="modelList"></datalist>
+        <button id="btnFetchModels" class="btn small">Fetch models</button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="setTemp">Temperature <span id="tempVal" class="hint"></span></label>
+      <input id="setTemp" type="range" min="0" max="1" step="0.1">
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label for="setReplyLang">Assistant replies in</label>
+        <select id="setReplyLang">
+          <option>English</option>
+          <option>Chinese</option>
+          <option>Auto (match the user)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="setTranslateTo">Translate into</label>
+        <select id="setTranslateTo">
+          <option>Chinese</option>
+          <option>Japanese</option>
+          <option>Korean</option>
+          <option>French</option>
+          <option>German</option>
+          <option>Spanish</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="setTavilyKey">Tavily API key <span class="hint">(optional — for 🔍 web search)</span></label>
+      <input id="setTavilyKey" type="password" placeholder="tvly-…" spellcheck="false" autocomplete="off">
+      <span id="searchHint" class="hint"></span>
+    </div>
+    <div class="field">
+      <label for="setExplainPrompt">Explanation prompt <span class="hint">(optional — customize how sentences are explained)</span></label>
+      <textarea id="setExplainPrompt" rows="4" spellcheck="false"></textarea>
+      <span class="hint">Placeholders: {TEXT} = the selected passage, {CONTEXT} = the surrounding paragraph. Leave empty for the built-in prompt. Applies to sentence explanations; single-word lookups use their own built-in prompt.</span>
+    </div>
+    <p class="privacy-note">Your key is stored only in this browser's local storage and sent only to the base URL above, via the local proxy.</p>
+    <div class="modal-actions">
+      <button id="btnTest" class="btn ghost">Test connection</button>
+      <span class="spacer"></span>
+      <button id="btnCancel" class="btn ghost">Cancel</button>
+      <button id="btnSave" class="btn primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
