@@ -61,68 +61,68 @@
 
 <div id="modalBack" class="hidden">
   <div id="settingsModal" role="dialog" aria-modal="true" aria-label="Settings">
-    <h2>Settings</h2>
+    <h2>设置</h2>
     <div class="field">
-      <label for="setProvider">Provider preset</label>
+      <label for="setProvider">提供商预设</label>
       <select id="setProvider"></select>
     </div>
     <div class="field">
-      <label for="setBaseUrl">Base URL <span class="hint">(OpenAI-compatible, usually ends with /v1)</span></label>
+      <label for="setBaseUrl">接口地址 <span class="hint">（Base URL，OpenAI 兼容，一般以 /v1 结尾）</span></label>
       <input id="setBaseUrl" placeholder="https://api.openai.com/v1" spellcheck="false">
     </div>
     <div class="field">
-      <label for="setApiKey">API key</label>
+      <label for="setApiKey">API 密钥</label>
       <input id="setApiKey" type="password" placeholder="sk-…" spellcheck="false" autocomplete="off">
     </div>
     <div class="field">
-      <label for="setModel">Model</label>
+      <label for="setModel">模型名称</label>
       <div class="row">
         <input id="setModel" list="modelList" placeholder="gpt-4o-mini" spellcheck="false">
         <datalist id="modelList"></datalist>
-        <button id="btnFetchModels" class="btn small">Fetch models</button>
+        <button id="btnFetchModels" class="btn small">获取模型列表</button>
       </div>
     </div>
     <div class="field">
-      <label for="setTemp">Temperature <span id="tempVal" class="hint"></span></label>
+      <label for="setTemp">温度 <span class="hint">（Temperature，0～1，低=稳定贴事实，高=发散有创意，默认 0.7）</span> <span id="tempVal" class="hint"></span></label>
       <input id="setTemp" type="range" min="0" max="1" step="0.1">
     </div>
     <div class="grid2">
       <div class="field">
-        <label for="setReplyLang">Assistant replies in</label>
+        <label for="setReplyLang">助手回复语言</label>
         <select id="setReplyLang">
-          <option>English</option>
-          <option>Chinese</option>
-          <option>Auto (match the user)</option>
+          <option value="Chinese">中文</option>
+          <option value="English">English</option>
+          <option value="Auto (match the user)">自动（跟随提问语言）</option>
         </select>
       </div>
       <div class="field">
-        <label for="setTranslateTo">Translate into</label>
+        <label for="setTranslateTo">翻译目标语言</label>
         <select id="setTranslateTo">
-          <option>Chinese</option>
-          <option>Japanese</option>
-          <option>Korean</option>
-          <option>French</option>
-          <option>German</option>
-          <option>Spanish</option>
+          <option value="Chinese">中文</option>
+          <option value="Japanese">日语</option>
+          <option value="Korean">韩语</option>
+          <option value="French">法语</option>
+          <option value="German">德语</option>
+          <option value="Spanish">西班牙语</option>
         </select>
       </div>
     </div>
     <div class="field">
-      <label for="setTavilyKey">Tavily API key <span class="hint">(optional — for 🔍 web search)</span></label>
+      <label for="setTavilyKey">Tavily API 密钥 <span class="hint">（可选 — 🔍 联网搜索用）</span></label>
       <input id="setTavilyKey" type="password" placeholder="tvly-…" spellcheck="false" autocomplete="off">
       <span id="searchHint" class="hint"></span>
     </div>
     <div class="field">
-      <label for="setExplainPrompt">Explanation prompt <span class="hint">(optional — customize how sentences are explained)</span></label>
+      <label for="setExplainPrompt">解释提示词 <span class="hint">（可选 — 自定义"解释一句话"的方式）</span></label>
       <textarea id="setExplainPrompt" rows="4" spellcheck="false"></textarea>
-      <span class="hint">Placeholders: {TEXT} = the selected passage, {CONTEXT} = the surrounding paragraph. Leave empty for the built-in prompt. Applies to sentence explanations; single-word lookups use their own built-in prompt.</span>
+      <span class="hint">占位符：{TEXT} = 选中的句子，{CONTEXT} = 所在段落。留空使用内置提示词。仅作用于句子解释；单词查词使用独立的内置提示词。</span>
     </div>
-    <p class="privacy-note">Your key is stored only in this browser's local storage and sent only to the base URL above, via the local proxy.</p>
+    <p class="privacy-note">你的密钥仅保存在本机浏览器的本地存储中，且只通过本地代理发送给你在上面填写的接口地址，不经过任何第三方。</p>
     <div class="modal-actions">
-      <button id="btnTest" class="btn ghost">Test connection</button>
+      <button id="btnTest" class="btn ghost">测试连接</button>
       <span class="spacer"></span>
-      <button id="btnCancel" class="btn ghost">Cancel</button>
-      <button id="btnSave" class="btn primary">Save</button>
+      <button id="btnCancel" class="btn ghost">取消</button>
+      <button id="btnSave" class="btn primary">保存</button>
     </div>
   </div>
 </div>

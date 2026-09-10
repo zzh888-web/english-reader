@@ -959,11 +959,11 @@ function openSettings() {
   if (pi < 0) pi = 0;
   setProvider.value = String(pi);
   const hint = $("#searchHint");
-  hint.textContent = "Checking search engine…";
+  hint.textContent = "正在检查搜索引擎…";
   fetch("/api/search-config").then(r => r.json()).then(j => {
     hint.textContent = j.tavily
-      ? "Search engine: Tavily (key auto-detected on this machine)."
-      : "Search engine: free web search (no key needed). Paste a Tavily key for better results.";
+      ? "搜索引擎：Tavily（已自动检测到本机密钥）。"
+      : "搜索引擎：免费网页搜索（无需密钥）。填写 Tavily 密钥可获得更好的搜索结果。";
   }).catch(() => { hint.textContent = ""; });
   modalBack.classList.remove("hidden");
   setTimeout(() => setBaseUrl.focus(), 50);
@@ -992,7 +992,7 @@ $("#btnSave").onclick = () => {
   LS.set("er.settings", state.settings);
   modalBack.classList.add("hidden");
   setStreamingUI(false);
-  toast("Settings saved.");
+  toast("设置已保存。");
 };
 $("#btnCancel").onclick = () => modalBack.classList.add("hidden");
 modalBack.addEventListener("click", e => { if (e.target === modalBack) modalBack.classList.add("hidden"); });
@@ -1000,9 +1000,9 @@ $("#btnSettings").onclick = openSettings;
 
 $("#btnFetchModels").onclick = async () => {
   const base = setBaseUrl.value.trim().replace(/\/+$/, "");
-  if (!base) return toast("Enter a base URL first.", true);
+  if (!base) return toast("请先填写接口地址。", true);
   const btn = $("#btnFetchModels");
-  btn.disabled = true; btn.textContent = "Fetching…";
+  btn.disabled = true; btn.textContent = "获取中…";
   try {
     const qs = new URLSearchParams({ baseUrl: base, apiKey: setApiKey.value.trim() });
     const res = await fetch("/api/models?" + qs);
@@ -1016,20 +1016,20 @@ $("#btnFetchModels").onclick = async () => {
       o.value = id; dl.appendChild(o);
     });
     if (!ids.includes(setModel.value)) setModel.value = ids[0];
-    toast(`Found ${ids.length} models.`);
+    toast(`已获取 ${ids.length} 个模型。`);
   } catch (err) {
-    toast("Could not fetch models: " + err.message, true);
+    toast("获取模型列表失败：" + err.message, true);
   } finally {
-    btn.disabled = false; btn.textContent = "Fetch models";
+    btn.disabled = false; btn.textContent = "获取模型列表";
   }
 };
 
 $("#btnTest").onclick = async () => {
   const base = setBaseUrl.value.trim().replace(/\/+$/, "");
   const model = setModel.value.trim();
-  if (!base || !model) return toast("Enter base URL and model first.", true);
+  if (!base || !model) return toast("请先填写接口地址和模型名称。", true);
   const btn = $("#btnTest");
-  btn.disabled = true; btn.textContent = "Testing…";
+  btn.disabled = true; btn.textContent = "测试中…";
   try {
     const res = await fetch("/api/chat", {
       method: "POST",
@@ -1043,11 +1043,11 @@ $("#btnTest").onclick = async () => {
     const j = await res.json();
     if (!res.ok) throw new Error((j.error && j.error.message) || `HTTP ${res.status}`);
     const txt = j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
-    toast(`Connection OK — model replied: "${(txt || "").trim().slice(0, 40)}"`);
+    toast(`连接成功 — 模型回复："${(txt || "").trim().slice(0, 40)}"`);
   } catch (err) {
-    toast("Connection failed: " + err.message, true);
+    toast("连接失败：" + err.message, true);
   } finally {
-    btn.disabled = false; btn.textContent = "Test connection";
+    btn.disabled = false; btn.textContent = "测试连接";
   }
 };
 
