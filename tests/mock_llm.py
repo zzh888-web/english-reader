@@ -81,6 +81,16 @@ class Handler(BaseHTTPRequestHandler):
         if model == "mock-strict-temp" and "temperature" in body:
             return self._json(400, {"error": {"message": "temperature only support 1 (mock strict model)"}})
 
+        # simulate thinking models: empty content on NON-streaming calls
+        # (the historical "empty response" bug), normal content when streaming
+        if model == "mock-thinking" and not body.get("stream"):
+            return self._json(200, {
+                "id": "mock-1", "object": "chat.completion", "model": model,
+                "choices": [{"index": 0, "finish_reason": "stop",
+                             "message": {"role": "assistant", "content": "",
+                                         "reasoning_content": "(long reasoning truncated)"}}],
+            })
+
         msgs = body.get("messages") or []
         texts = [m.get("content", "") for m in msgs if m.get("role") == "user"]
         last = texts[-1] if texts else ""

@@ -614,16 +614,20 @@ async function actTranslate(text, sentIdx) {
   const key = state.chapterIdx + ":" + sentIdx;
   const tr = insertTranslation(sentIdx, "Translating…", true);
   if (!tr) return;
+  const trTextEl = tr.querySelector(".tr-text");
   try {
+    // stream: thinking models (Kimi K2-thinking, GLM-4.5, …) often return an
+    // empty body on non-streaming calls; streaming also renders text as it arrives
     let out = await callChat({
-      stream: false, temperature: 0.2,
+      stream: true, temperature: 0.2,
       messages: [
         { role: "system", content: `You are a professional literary translator. Translate the user's English text into ${state.settings.translateTo}. Output ONLY the translation itself — no quotes, no notes, no explanations. If the text is a single word, give its most fitting meaning in this context.` },
         { role: "user", content: text },
       ],
+      onDelta: t => { if (trTextEl && t.trim()) trTextEl.textContent = t; },
     });
     out = (out || "").trim().replace(/^["\u201C\u201D]+|["\u201C\u201D]+$/g, "");
-    if (!out) throw new Error("empty response");
+    if (!out) throw new Error("the model returned no text (thinking models may do this on short calls — try again or switch model)");
     insertTranslation(sentIdx, out);
     state.translations[key] = out;
     saveBookNow();
@@ -690,7 +694,9 @@ async function callChat({ messages, temperature, stream, onDelta, signal, tools 
   if (!stream) {
     const j = await res.json();
     const ch = j.choices && j.choices[0];
-    return (ch && ch.message && ch.message.content) || "";
+    const m = ch && ch.message;
+    // thinking models may leave content empty; fall back to reasoning text
+    return (m && (m.content || m.reasoning_content)) || "";
   }
   const rd = res.body.getReader();
   const dec = new TextDecoder();
@@ -1077,7 +1083,6 @@ $("#btnTest").onclick = async () => {
       body: JSON.stringify({
         baseUrl: base, apiKey: setApiKey.value.trim(), model,
         messages: [{ role: "user", content: "Reply with the single word: ready" }],
-        max_tokens: 10,
       }),
     });
     const j = await res.json();

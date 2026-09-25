@@ -66,10 +66,8 @@ const waitIdle = page => page.waitForFunction(
 
   // ---------- T3 translate a sentence ----------
   await page.locator(".ctx-item", { hasText: "Translate sentence" }).click();
-  await page.waitForFunction(() => {
-    const t = document.querySelector('.tr[data-for="1"] .tr-text');
-    return t && !/Translating/.test(t.textContent) && t.textContent.trim().length > 0;
-  }, undefined, { timeout: 15000 });
+  // the ✕ remove button is only rendered when the streamed translation is complete
+  await page.waitForSelector('.tr[data-for="1"] .tr-rm', { state: "attached", timeout: 15000 });
   const trText = await page.locator('.tr[data-for="1"] .tr-text').textContent();
   const trBelow = await page.locator('.s[data-i="1"] ~ .tr[data-for="1"], .tr[data-for="1"]').first().evaluate(
     el => el.getBoundingClientRect().top > el.previousElementSibling.getBoundingClientRect().bottom - 5);
@@ -270,6 +268,25 @@ const waitIdle = page => page.waitForFunction(
   await page.click("#btnSettings");
   await page.waitForSelector("#settingsModal:not(.hidden)");
   await page.locator("#setTempAuto").uncheck();
+  await page.fill("#setModel", "mock-gpt");
+  await page.click("#btnSave");
+
+  // ---------- T13 thinking-model translation (no more "empty response") ----------
+  await page.click("#btnSettings");
+  await page.waitForSelector("#settingsModal:not(.hidden)");
+  await page.fill("#setModel", "mock-thinking"); // non-stream returns empty content
+  await page.click("#btnSave");
+  await page.locator('.s[data-i="2"]').click({ button: "right" }); // a fresh sentence
+  await page.waitForSelector("#ctxMenu:not(.hidden)");
+  await page.locator(".ctx-item", { hasText: "Translate sentence" }).click();
+  await page.waitForFunction(() => {
+    const t = document.querySelector('.tr[data-for="2"] .tr-text');
+    return t && /模拟翻译/.test(t.textContent) && !/Translating/.test(t.textContent);
+  }, undefined, { timeout: 20000 });
+  await shot(page, "t13_thinking_translate");
+  check("T13 thinking model translates without empty response", true);
+  await page.click("#btnSettings");
+  await page.waitForSelector("#settingsModal:not(.hidden)");
   await page.fill("#setModel", "mock-gpt");
   await page.click("#btnSave");
 
