@@ -75,6 +75,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(400, {"error": {"message": "bad json"}})
 
         model = body.get("model", "mock-gpt")
+
+        # simulate models that only accept a fixed temperature (e.g. Kimi thinking):
+        # this model rejects ANY explicit temperature value with a 400
+        if model == "mock-strict-temp" and "temperature" in body:
+            return self._json(400, {"error": {"message": "temperature only support 1 (mock strict model)"}})
+
         msgs = body.get("messages") or []
         texts = [m.get("content", "") for m in msgs if m.get("role") == "user"]
         last = texts[-1] if texts else ""

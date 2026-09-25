@@ -196,22 +196,36 @@ class Handler(BaseHTTPRequestHandler):
         if payload.get("stream"):
             headers["Accept"] = "text/event-stream"
 
-        req = urllib.request.Request(endpoint, data=data, headers=headers,
-                                     method="POST")
+        # Some models only accept a fixed temperature (e.g. Kimi thinking series);
+        # if the provider rejects ours, transparently retry once without it.
+        attempts = [body]
+        if "temperature" in body:
+            attempts.append({k: v for k, v in body.items() if k != "temperature"})
 
-        try:
-            resp = urllib.request.urlopen(req, timeout=UPSTREAM_TIMEOUT)
-        except urllib.error.HTTPError as e:
-            detail = e.read()
-            try:  # try to keep provider's JSON error body
-                detail = json.dumps(json.loads(detail.decode("utf-8"))).encode("utf-8")
-            except Exception:
-                detail = json.dumps(
-                    {"error": {"message": detail.decode("utf-8", "replace")[:2000]}}
-                ).encode("utf-8")
-            return self._send_bytes(e.code, detail, "application/json; charset=utf-8")
-        except Exception as e:
-            return self._send_json(502, {"error": {"message": "cannot reach %s: %s" % (endpoint, e)}})
+        resp = None
+        for i, attempt in enumerate(attempts):
+            req = urllib.request.Request(endpoint, data=json.dumps(attempt).encode("utf-8"),
+                                         headers=headers, method="POST")
+            try:
+                resp = urllib.request.urlopen(req, timeout=UPSTREAM_TIMEOUT)
+                break
+            except urllib.error.HTTPError as e:
+                raw = e.read()
+                if (i == 0 and len(attempts) > 1 and e.code in (400, 422)
+                        and "temperature" in raw.decode("utf-8", "replace").lower()):
+                    continue  # retry without temperature
+                detail = raw
+                try:  # try to keep provider's JSON error body
+                    detail = json.dumps(json.loads(detail.decode("utf-8"))).encode("utf-8")
+                except Exception:
+                    detail = json.dumps(
+                        {"error": {"message": detail.decode("utf-8", "replace")[:2000]}}
+                    ).encode("utf-8")
+                return self._send_bytes(e.code, detail, "application/json; charset=utf-8")
+            except Exception as e:
+                return self._send_json(502, {"error": {"message": "cannot reach %s: %s" % (endpoint, e)}})
+        if resp is None:
+            return self._send_json(502, {"error": {"message": "no response from upstream"}})
 
         with resp:
             if payload.get("stream"):

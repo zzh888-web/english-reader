@@ -62,7 +62,8 @@ const SAMPLE_BOOK = [
 /* ============================== state ============================== */
 const defaultSettings = {
   providerIdx: 0, baseUrl: "", apiKey: "", model: "",
-  temperature: 0.7, replyLang: "Chinese", translateTo: "Chinese",
+  temperature: 0.7, tempAuto: false,
+  replyLang: "Chinese", translateTo: "Chinese",
   theme: "sepia", fontSize: 19, chatWidth: 400, showTr: true, chatOpen: true,
   searchOn: false, tavilyKey: "", explainPrompt: "",
   providerKeys: {},   // baseUrl -> last used API key (per provider)
@@ -670,7 +671,9 @@ async function callChat({ messages, temperature, stream, onDelta, signal, tools 
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       baseUrl: s.baseUrl, apiKey: s.apiKey, model: s.model, messages,
-      temperature, stream: tools ? false : stream, tools,
+      // "follow model default" mode: omit the parameter entirely
+      temperature: s.tempAuto ? undefined : temperature,
+      stream: tools ? false : stream, tools,
     }),
     signal,
   });
@@ -954,6 +957,9 @@ function openSettings() {
   const s = state.settings;
   setBaseUrl.value = s.baseUrl; setApiKey.value = s.apiKey; setModel.value = s.model;
   setTemp.value = s.temperature; tempVal.textContent = s.temperature;
+  setTempAuto.checked = !!s.tempAuto;
+  setTemp.disabled = !!s.tempAuto;
+  if (s.tempAuto) tempVal.textContent = "模型默认";
   setReplyLang.value = s.replyLang; setTranslateTo.value = s.translateTo;
   setTavilyKey.value = s.tavilyKey || "";
   setExplainPrompt.value = s.explainPrompt || "";
@@ -983,6 +989,11 @@ setProvider.onchange = () => {
 };
 setBaseUrl.addEventListener("change", autofillForBaseUrl);
 setTemp.oninput = () => { tempVal.textContent = setTemp.value; };
+const setTempAuto = $("#setTempAuto");
+setTempAuto.onchange = () => {
+  setTemp.disabled = setTempAuto.checked;
+  tempVal.textContent = setTempAuto.checked ? "模型默认" : setTemp.value;
+};
 
 /* restore the API key and model last used with this base URL */
 function autofillForBaseUrl() {
@@ -1012,6 +1023,7 @@ $("#btnSave").onclick = () => {
     apiKey: key,
     model,
     temperature: Number(setTemp.value),
+    tempAuto: setTempAuto.checked,
     replyLang: setReplyLang.value,
     translateTo: setTranslateTo.value,
     tavilyKey: setTavilyKey.value.trim(),
@@ -1065,7 +1077,7 @@ $("#btnTest").onclick = async () => {
       body: JSON.stringify({
         baseUrl: base, apiKey: setApiKey.value.trim(), model,
         messages: [{ role: "user", content: "Reply with the single word: ready" }],
-        max_tokens: 10, temperature: 0,
+        max_tokens: 10,
       }),
     });
     const j = await res.json();

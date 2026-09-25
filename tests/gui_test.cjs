@@ -236,6 +236,43 @@ const waitIdle = page => page.waitForFunction(
     JSON.stringify(stored));
   await page.click("#btnSave"); // restore mock as active provider
 
+  // ---------- T12 temperature handling (Kimi-style fixed-temperature models) ----------
+  await page.click("#btnSettings");
+  await page.waitForSelector("#settingsModal:not(.hidden)");
+  await page.fill("#setModel", "mock-strict-temp");
+  await page.click("#btnSave");
+  await page.fill("#chatInput", "temperature auto-retry test");
+  await page.press("#chatInput", "Enter");
+  await page.waitForFunction(() => {
+    const b = document.querySelectorAll("#chatMessages .msg.assistant .body");
+    const last = b[b.length - 1];
+    return document.getElementById("btnSend").textContent === "Send" && last
+      && /Mock reply/.test(last.textContent || "") && !/Request failed/.test(last.textContent || "");
+  }, undefined, { timeout: 30000 });
+  await shot(page, "t12_temp_auto_retry");
+  check("T12 proxy auto-retries without temperature on provider rejection", true);
+  // "follow model default" mode: temperature omitted entirely
+  await page.click("#btnSettings");
+  await page.waitForSelector("#settingsModal:not(.hidden)");
+  await page.locator("#setTempAuto").check();
+  const sliderDisabled = await page.locator("#setTemp").isDisabled();
+  await page.click("#btnSave");
+  await page.fill("#chatInput", "default temp test");
+  await page.press("#chatInput", "Enter");
+  await page.waitForFunction(() => {
+    const b = document.querySelectorAll("#chatMessages .msg.assistant .body");
+    const last = b[b.length - 1];
+    return document.getElementById("btnSend").textContent === "Send" && last
+      && /Mock reply/.test(last.textContent || "") && !/Request failed/.test(last.textContent || "");
+  }, undefined, { timeout: 30000 });
+  check("T12 default-temperature mode omits the parameter and works", sliderDisabled === true);
+  // restore
+  await page.click("#btnSettings");
+  await page.waitForSelector("#settingsModal:not(.hidden)");
+  await page.locator("#setTempAuto").uncheck();
+  await page.fill("#setModel", "mock-gpt");
+  await page.click("#btnSave");
+
   // ---------- results ----------
   await browser.close();
   const failed = results.filter(r => !r.pass);
