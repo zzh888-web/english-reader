@@ -65,6 +65,8 @@ const defaultSettings = {
   temperature: 0.7, replyLang: "Chinese", translateTo: "Chinese",
   theme: "sepia", fontSize: 19, chatWidth: 400, showTr: true, chatOpen: true,
   searchOn: false, tavilyKey: "", explainPrompt: "",
+  providerKeys: {},   // baseUrl -> last used API key (per provider)
+  providerModels: {}, // baseUrl -> last used model name (per provider)
 };
 
 const DEFAULT_EXPLAIN_PROMPT = `Explain the passage below clearly and concisely: what it means, any difficult vocabulary or grammar, and any cultural or literary background a reader might miss.
@@ -972,17 +974,43 @@ function openSettings() {
 setProvider.onchange = () => {
   const p = PROVIDER_PRESETS[Number(setProvider.value)];
   if (!p) return;
-  if (p.baseUrl) setBaseUrl.value = p.baseUrl;
-  if (p.model) setModel.value = p.model;
-  if (/Ollama/.test(p.name)) setApiKey.value = "";
+  if (p.baseUrl) {
+    setBaseUrl.value = p.baseUrl;
+    const base = p.baseUrl.replace(/\/+$/, "");
+    setApiKey.value = state.settings.providerKeys[base] || "";
+    setModel.value = state.settings.providerModels[base] || p.model || setModel.value;
+  }
 };
+setBaseUrl.addEventListener("change", autofillForBaseUrl);
 setTemp.oninput = () => { tempVal.textContent = setTemp.value; };
 
+/* restore the API key and model last used with this base URL */
+function autofillForBaseUrl() {
+  const base = setBaseUrl.value.trim().replace(/\/+$/, "");
+  if (!base) return;
+  setApiKey.value = state.settings.providerKeys[base] || "";
+  const m = state.settings.providerModels[base];
+  if (m) setModel.value = m;
+}
+
+$("#btnKeyEye").onclick = () => {
+  const show = setApiKey.type === "password";
+  setApiKey.type = show ? "text" : "password";
+  $("#btnKeyEye").textContent = show ? "🙈" : "👁";
+};
+
 $("#btnSave").onclick = () => {
+  const base = setBaseUrl.value.trim().replace(/\/+$/, "");
+  const key = setApiKey.value.trim();
+  const model = setModel.value.trim();
+  if (base) {  // remember per provider so switching back auto-fills
+    state.settings.providerKeys[base] = key;
+    state.settings.providerModels[base] = model;
+  }
   Object.assign(state.settings, {
-    baseUrl: setBaseUrl.value.trim().replace(/\/+$/, ""),
-    apiKey: setApiKey.value.trim(),
-    model: setModel.value.trim(),
+    baseUrl: base,
+    apiKey: key,
+    model,
     temperature: Number(setTemp.value),
     replyLang: setReplyLang.value,
     translateTo: setTranslateTo.value,

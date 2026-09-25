@@ -195,6 +195,47 @@ const waitIdle = page => page.waitForFunction(
   check("T9 search-informed answer rendered", true);
   await page.click("#btnSearchToggle"); // back to off
 
+  // ---------- T11 per-provider API key memory ----------
+  await page.click("#btnSettings");
+  await page.waitForSelector("#settingsModal:not(.hidden)");
+  await page.fill("#setApiKey", "key-A-111");
+  await page.click("#btnSave"); // save mock provider with key-A
+  await page.click("#btnSettings");
+  await page.waitForSelector("#settingsModal:not(.hidden)");
+  await page.selectOption("#setProvider", "1"); // -> OpenAI preset
+  await page.waitForTimeout(200);
+  const afterSwitch = {
+    baseUrl: await page.inputValue("#setBaseUrl"),
+    apiKey: await page.inputValue("#setApiKey"),
+    model: await page.inputValue("#setModel"),
+  };
+  check("T11 switching provider clears key and fills preset model",
+    /api\.openai\.com/.test(afterSwitch.baseUrl) && afterSwitch.apiKey === "" && afterSwitch.model === "gpt-4o-mini",
+    JSON.stringify(afterSwitch));
+  await page.fill("#setApiKey", "key-B-222");
+  await page.click("#btnSave"); // save OpenAI with key-B
+  await page.click("#btnSettings");
+  await page.waitForSelector("#settingsModal:not(.hidden)");
+  await page.fill("#setBaseUrl", "http://127.0.0.1:8766/v1");
+  await page.locator("#setModel").click(); // blur -> change event -> autofill
+  await page.waitForFunction(() => document.getElementById("setApiKey").value === "key-A-111",
+    undefined, { timeout: 5000 });
+  const restored = {
+    apiKey: await page.inputValue("#setApiKey"),
+    model: await page.inputValue("#setModel"),
+  };
+  const stored = await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem("er.settings") || "{}");
+    return s.providerKeys || {};
+  });
+  await shot(page, "t11_provider_key_memory");
+  check("T11 switching back auto-restores the first provider's key and model",
+    restored.apiKey === "key-A-111" && restored.model === "mock-gpt", JSON.stringify(restored));
+  check("T11 both keys stored per provider",
+    stored["http://127.0.0.1:8766/v1"] === "key-A-111" && stored["https://api.openai.com/v1"] === "key-B-222",
+    JSON.stringify(stored));
+  await page.click("#btnSave"); // restore mock as active provider
+
   // ---------- results ----------
   await browser.close();
   const failed = results.filter(r => !r.pass);

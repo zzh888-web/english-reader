@@ -71,8 +71,11 @@
       <input id="setBaseUrl" placeholder="https://api.openai.com/v1" spellcheck="false">
     </div>
     <div class="field">
-      <label for="setApiKey">API 密钥</label>
-      <input id="setApiKey" type="password" placeholder="sk-…" spellcheck="false" autocomplete="off">
+      <label for="setApiKey">API 密钥 <span class="hint">（按接口地址自动记忆，切换提供商后自动填回）</span></label>
+      <div class="row">
+        <input id="setApiKey" type="password" placeholder="sk-…" spellcheck="false" autocomplete="off">
+        <button id="btnKeyEye" class="btn small" title="显示/隐藏密钥">👁</button>
+      </div>
     </div>
     <div class="field">
       <label for="setModel">模型名称</label>
